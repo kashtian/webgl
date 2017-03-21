@@ -12,10 +12,12 @@ export default {
         //this.initStats(container);
         this.initCamera(width, height);
         this.initScene();
-        //this.initLight();
+        this.initLight();
         //this.initLine();
-        this.initGrid();
+        //this.initGrid();
         //this.createText();
+        this.createMesh();
+        this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
         //this.render();
     },
@@ -31,8 +33,8 @@ export default {
 
     initCamera(w, h) {
         this.camera = new THREE.PerspectiveCamera(45, w / h, 1, 10000);
-        Object.assign(this.camera.position, { x: 0, y: 1000, z: 0 });
-        Object.assign(this.camera.up, { x: 0, y: 0, z: 1 });
+        Object.assign(this.camera.position, { x: 600, y: 0, z: 600 });
+        Object.assign(this.camera.up, { x: 0, y: 1, z: 0 });
         this.camera.lookAt({x: 0, y: 0, z: 0});
     },
 
@@ -41,9 +43,9 @@ export default {
     },
 
     initLight() {
-        this.light = new THREE.SpotLight(0x000000, 1, 0);
-        this.light.position.set(100, 100, 200);
-        this.scene.add(this.light);
+        let light = new THREE.AmbientLight(0xFF0000);
+        light.position.set(100, 100, 200);
+        this.scene.add(light);
     },
 
     initStats(container) {
@@ -103,7 +105,9 @@ export default {
 
     createMesh() {
         let geometry = new THREE.CubeGeometry(200, 100, 50, 4, 4);
-        let material = new THREE.MeshLambertMaterial({color: 0xFFFFFF})
+        let material = new THREE.MeshLambertMaterial({color: 0xFFC0CB});
+        let mesh = new THREE.Mesh(geometry, material);
+        this.scene.add(mesh);
     },
 
     createText() {
