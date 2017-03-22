@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node ./config/dev-server.js",
-    "build": "webpack --config ./config/webpack.prod.js"
+    "build": "rimraf dist && webpack --config ./config/webpack.prod.js"
   },
   "repository": {
     "type": "git",
@@ -33,6 +33,7 @@
     "html-webpack-plugin": "^2.28.0",
     "less": "^2.7.2",
     "less-loader": "^3.0.0",
+    "rimraf": "^2.6.1",
     "style-loader": "^0.14.1",
     "url-loader": "^0.5.8",
     "webpack": "^2.2.1",

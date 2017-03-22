@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import testImg from '../images/test.png';
 
 export default {
     init(container) {
@@ -13,11 +14,13 @@ export default {
         this.initCamera(width, height);
         this.initScene();
         this.initLight();
+        this.createCanvasTexture();
         //this.initLine();
-        //this.initGrid();
+        this.initGrid();
         //this.createText();
-        this.createMesh();
-        this.renderer.clear();
+        //this.createMesh();
+        //this.createTexture();
+        //this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
         //this.render();
     },
@@ -33,7 +36,7 @@ export default {
 
     initCamera(w, h) {
         this.camera = new THREE.PerspectiveCamera(45, w / h, 1, 10000);
-        Object.assign(this.camera.position, { x: 600, y: 0, z: 600 });
+        Object.assign(this.camera.position, { x: 600, y: 100, z: 600 });
         Object.assign(this.camera.up, { x: 0, y: 1, z: 0 });
         this.camera.lookAt({x: 0, y: 0, z: 0});
     },
@@ -43,7 +46,7 @@ export default {
     },
 
     initLight() {
-        let light = new THREE.AmbientLight(0xFF0000);
+        let light = new THREE.AmbientLight(0xFFC0CB);
         light.position.set(100, 100, 200);
         this.scene.add(light);
     },
@@ -82,6 +85,7 @@ export default {
 
     // xz 平面网格
     initGrid() {
+        this.scene2 = new THREE.Scene();
         let geometry = new THREE.Geometry();
         geometry.vertices.push(new THREE.Vector3(-500, 0, 0));
         geometry.vertices.push(new THREE.Vector3(500, 0, 0));
@@ -94,13 +98,14 @@ export default {
         for (let i = 0; i < count; i++) {            
             line = new THREE.Line(geometry, material);
             line.position.z = (i * step) - 500;
-            this.scene.add(line);
+            this.scene2.add(line);
             
             line = new THREE.Line(geometry, material);
             line.position.x = (i * 50) - 500;
             line.rotation.y = 90 * Math.PI / 180;
-            this.scene.add(line);
+            this.scene2.add(line);
         }
+        this.scene.add(this.scene2);
     },
 
     createMesh() {
@@ -122,14 +127,36 @@ export default {
         this.scene.add(textMesh);
     },
 
+    createTexture() {
+        let geometry = new THREE.PlaneGeometry(500, 300, 1, 1);
+        geometry.vertices[0].uv = new THREE.Vector2(0,0);
+        geometry.vertices[1].uv = new THREE.Vector2(2,0);
+        geometry.vertices[2].uv = new THREE.Vector2(2,2);
+        geometry.vertices[3].uv = new THREE.Vector2(0,2);
+        let texture = THREE.ImageUtils.loadTexture(testImg, null, () => {});
+        let material = new THREE.MeshBasicMaterial({map: texture});
+        let mesh = new THREE.Mesh(geometry, material);
+        this.scene.add(mesh);
+
+    },
+
+    createCanvasTexture() {
+        let geometry = new THREE.CubeGeometry(200, 200, 200);
+        let texture = new THREE.Texture(document.querySelector('body > canvas'));
+        let material = new THREE.MeshBasicMaterial({map: texture});
+        texture.needsUpdate = true;
+        let mesh = new THREE.Mesh(geometry, material);
+        this.scene.add(mesh);
+    },
+
     render() {
         this.renderer.clear();
-        this.step = (this.camera.position.y > 1000 || this.camera.position.y < 0) ? (-this.step) : this.step;
-        this.camera.position.y += this.step;
+        // this.step = (this.camera.position.y > 1000 || this.camera.position.y < 0) ? (-this.step) : this.step;
+        // this.camera.position.y += this.step;
         this.renderer.render(this.scene, this.camera);
-        requestAnimationFrame(() => {
-            this.render();
-        });
+        // requestAnimationFrame(() => {
+        //     this.render();
+        // });
         //this.stats.update();
     }
 }
