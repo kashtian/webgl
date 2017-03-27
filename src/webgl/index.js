@@ -1,162 +1,79 @@
 import * as THREE from 'three';
-import testImg from '../images/test.png';
 
-export default {
-    init(container) {
-        if (!container) {
-            return;
-        }
-        let width = container.clientWidth;
-        let height = container.clientHeight;
-        this.step = -1;
-        this.initRenderer(container, width, height);
-        //this.initStats(container);
-        this.initCamera(width, height);
-        this.initScene();
-        this.initLight();
-        this.createCanvasTexture();
-        //this.initLine();
-        this.initGrid();
-        //this.createText();
-        //this.createMesh();
-        //this.createTexture();
-        //this.renderer.clear();
-        this.renderer.render(this.scene, this.camera);
-        //this.render();
-    },
+export default class Webgl {
+    constructor(options) {
+        this.opts = options;
+        this.init();
+    }
 
-    initRenderer(container, w, h) {        
-        this.renderer = new THREE.WebGLRenderer({
-            antialias : true
-        });
-        this.renderer.setSize(w, h);
-        container.appendChild(this.renderer.domElement);
+    init() {
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.setSize(this.opts.w, this.opts.h);
+        document.body.appendChild(this.renderer.domElement);
         this.renderer.setClearColor(0xFFFFFF, 1);
-    },
+        this.renderer.setScissorTest( true );
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
 
-    initCamera(w, h) {
-        this.camera = new THREE.PerspectiveCamera(45, w / h, 1, 10000);
-        Object.assign(this.camera.position, { x: 600, y: 100, z: 600 });
-        Object.assign(this.camera.up, { x: 0, y: 1, z: 0 });
-        this.camera.lookAt({x: 0, y: 0, z: 0});
-    },
+    // 创建正交照相机
+    createOrtCamera() {
+        let camera = new THREE.OrthographicCamera(-2,2,1.5,-1.5,1,10);
+        camera.position.set(0, 0, 5);
+        camera.lookAt(new THREE.Vector3(0,0,0));
+        let scene = new THREE.Scene();
+        scene.add(camera);
+        let cube = new THREE.Mesh(new THREE.BoxGeometry(1,1,1),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xff0000,
+                        wireframe: true
+                    }));
+        scene.add(cube);
+        this.renderer.setViewport(0,450, 200, 150);
+        this.renderer.setScissor(0,450, 200, 150);
+        this.renderer.render(scene, camera);
+    }
 
-    initScene() {
-        this.scene = new THREE.Scene();
-    },
+    // 创建透视照相机
+    createPersCamera() {
+        let camera = new THREE.PerspectiveCamera(15, 400 / 300, 1, 10);
+        camera.position.set(3, 0, 5);
+        camera.lookAt(new THREE.Vector3(0,0,0));
+        let scene = new THREE.Scene();
+        scene.add(camera);
+        let cube = new THREE.Mesh(new THREE.BoxGeometry(1,1,1, 2, 2, 2),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xff0000,
+                        wireframe: true
+                    }));
+        scene.add(cube);
+        this.renderer.setViewport(200,450, 200, 150);
+        this.renderer.setScissor(200,450, 200, 150);
+        this.renderer.render(scene, camera);
+    }
 
-    initLight() {
-        let light = new THREE.AmbientLight(0xFFC0CB);
-        light.position.set(100, 100, 200);
-        this.scene.add(light);
-    },
-
-    initStats(container) {
-        this.stats = new Stats();
-        Object.assign(this.stats.domElement.style, {
-            position: 'absolute',
-            left: '0px',
-            top: '0px'
+    // 创建几何体，默认使用透视照相机
+    createGeoMetry({geometry, x, y, w, h, fov, material, light}) {
+        let camera = new THREE.PerspectiveCamera(fov || 15, 400 / 300, 1, 10);
+        camera.position.set(5, -5, 5);
+        camera.lookAt(new THREE.Vector3(0,0,0));
+        let scene = new THREE.Scene();
+        scene.add(camera);
+        let mymaterial = material || new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            wireframe: true
         });
-        container.appendChild(this.stats.domElement);
-    },
-
-    initLine() {
-        // 创建一个几何体
-        let geometry = new THREE.Geometry();
-        // 定义线条的材质
-        let material = new THREE.LineBasicMaterial({
-            // 线条各部分颜色会根据顶点颜色来进行插值形成一种渐变效果
-            vertexColors: THREE.VertexColors
-        })
-        let color1 = new THREE.Color(0x444444),
-            color2 = new THREE.Color(0xFF0000);
-
-        // 定义两个定点并设置颜色
-        let p1 = new THREE.Vector3(-100, 0, 100);
-        let p2 = new THREE.Vector3(100, 0, -100);
-        geometry.vertices.push(p1);
-        geometry.vertices.push(p2);
-        geometry.colors.push(color1, color2);
-
-        let line = new THREE.Line(geometry, material, THREE.LineSegments);
-        this.scene.add(line);
-    },
-
-    // xz 平面网格
-    initGrid() {
-        this.scene2 = new THREE.Scene();
-        let geometry = new THREE.Geometry();
-        geometry.vertices.push(new THREE.Vector3(-500, 0, 0));
-        geometry.vertices.push(new THREE.Vector3(500, 0, 0));
-        let material = new THREE.LineDashedMaterial({
-            color: 0xFFC0CB,
-            opacity: 1
-        })
-        let count = 20, step = 1000 / count;
-        let line;
-        for (let i = 0; i < count; i++) {            
-            line = new THREE.Line(geometry, material);
-            line.position.z = (i * step) - 500;
-            this.scene2.add(line);
-            
-            line = new THREE.Line(geometry, material);
-            line.position.x = (i * 50) - 500;
-            line.rotation.y = 90 * Math.PI / 180;
-            this.scene2.add(line);
+        let mesh = new THREE.Mesh(geometry, mymaterial);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);        
+        if (light) {
+            light.target = mesh;
+            light.castShadow = true;
+            scene.add(light);
         }
-        this.scene.add(this.scene2);
-    },
-
-    createMesh() {
-        let geometry = new THREE.CubeGeometry(200, 100, 50, 4, 4);
-        let material = new THREE.MeshLambertMaterial({color: 0xFFC0CB});
-        let mesh = new THREE.Mesh(geometry, material);
-        this.scene.add(mesh);
-    },
-
-    createText() {
-        let textGeo = new THREE.TextGeometry('test', {
-
-        });
-        let material = new THREE.MultiMaterial( [
-					new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.FlatShading } ), // front
-					new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.SmoothShading } ) // side
-				] );
-        let textMesh = new THREE.Mesh(textGeo, material);
-        this.scene.add(textMesh);
-    },
-
-    createTexture() {
-        let geometry = new THREE.PlaneGeometry(500, 300, 1, 1);
-        geometry.vertices[0].uv = new THREE.Vector2(0,0);
-        geometry.vertices[1].uv = new THREE.Vector2(2,0);
-        geometry.vertices[2].uv = new THREE.Vector2(2,2);
-        geometry.vertices[3].uv = new THREE.Vector2(0,2);
-        let texture = THREE.ImageUtils.loadTexture(testImg, null, () => {});
-        let material = new THREE.MeshBasicMaterial({map: texture});
-        let mesh = new THREE.Mesh(geometry, material);
-        this.scene.add(mesh);
-
-    },
-
-    createCanvasTexture() {
-        let geometry = new THREE.CubeGeometry(200, 200, 200);
-        let texture = new THREE.Texture(document.querySelector('body > canvas'));
-        let material = new THREE.MeshBasicMaterial({map: texture});
-        texture.needsUpdate = true;
-        let mesh = new THREE.Mesh(geometry, material);
-        this.scene.add(mesh);
-    },
-
-    render() {
-        this.renderer.clear();
-        // this.step = (this.camera.position.y > 1000 || this.camera.position.y < 0) ? (-this.step) : this.step;
-        // this.camera.position.y += this.step;
-        this.renderer.render(this.scene, this.camera);
-        // requestAnimationFrame(() => {
-        //     this.render();
-        // });
-        //this.stats.update();
+        this.renderer.setViewport(x, y, w, h);
+        this.renderer.setScissor(x, y, w, h);
+        this.renderer.render(scene, camera);
     }
 }
