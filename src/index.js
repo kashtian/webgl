@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import webglHelper from './webgl/helper';
 import Clock from './canvas/clock';
 import Webgl from './webgl';
+import period from './animation/periodictable';
 import './style.less';
 
 setTimeout(function() {
@@ -54,4 +55,14 @@ setTimeout(function() {
             opacity: 0.7
         })
     });
+    period.init('.period-wrapper .box');
+    let tableBtn = document.querySelector('.table-btn');
+    tableBtn.addEventListener('click', function() {
+        period.transform('table');
+    });
+
+    let sphereBtn = document.querySelector('.sphere-btn');
+    sphereBtn.addEventListener('click', function() {
+        period.transform('sphere');
+    })
 });

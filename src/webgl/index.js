@@ -25,7 +25,7 @@ export default class Webgl {
         scene.add(camera);
         let cube = new THREE.Mesh(new THREE.BoxGeometry(1,1,1),
                     new THREE.MeshBasicMaterial({
-                        color: 0xff0000,
+                        color: 0x000000,
                         wireframe: true
                     }));
         scene.add(cube);
@@ -37,15 +37,16 @@ export default class Webgl {
     // 创建透视照相机
     createPersCamera() {
         let camera = new THREE.PerspectiveCamera(15, 400 / 300, 1, 10);
-        camera.position.set(3, 0, 5);
+        camera.position.set(0, 0, 5);
         camera.lookAt(new THREE.Vector3(0,0,0));
         let scene = new THREE.Scene();
         scene.add(camera);
-        let cube = new THREE.Mesh(new THREE.BoxGeometry(1,1,1, 2, 2, 2),
+        let cube = new THREE.Mesh(new THREE.BoxGeometry(2,2,2, 2, 2, 2),
                     new THREE.MeshBasicMaterial({
                         color: 0xff0000,
                         wireframe: true
                     }));
+        console.log('cube: ', cube.position);
         scene.add(cube);
         this.renderer.setViewport(200,450, 200, 150);
         this.renderer.setScissor(200,450, 200, 150);
