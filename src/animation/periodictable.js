@@ -184,7 +184,6 @@ export default {
             x: r * Math.sin(vRad) * Math.cos(hRad) + 'px',
             y: -r * Math.cos(vRad) + 'px',
             z: r * Math.sin(vRad) * Math.sin(hRad) + 'px',
-            rotateZ: this.getRotateZ(hDeg, vDeg) + 'deg',
             rotateY: this.getRotateY(hDeg) + 'deg'
         })
 
@@ -212,18 +211,65 @@ export default {
     },
 
     getRotateY(deg) {
-        if (deg <= 90) {
-            return 90 - deg;
-        } else if (deg > 90 && deg <= 180) {
-            return 90 - deg;
-        } else if (deg > 180 && deg <= 270) {
-            return 270 - deg;
-        } else if (deg > 270 && deg <= 360) {
-            return 270 - deg;
-        }
-         else {
-            return 0;
-        }
+        return 90 - deg;
+    },
+
+    getMatrix3d() {
+
+    },
+
+    multiMatrix(m1, m2) {
+        let arr = [],
+            sum = 0,
+            count = m2[0].length;
+
+        m1.forEach((v, i) => {
+            arr.push([]);
+            for (let j = 0; j < count; j++) {                
+                v.forEach((item, index) => {
+                    sum += item * m2[index][j];
+                });                
+                arr[i].push(sum);
+                sum = 0;
+            }
+        })
+        return arr;
+    },
+
+    getCss3Matrix(arr) {
+        let res = [];
+        arr.forEach((v, i) => {
+            v.forEach((item, index) => {
+                if (i == 0) {
+                    res.push([]);
+                }
+                res[index][i] = item;
+            });
+        })
+        return res;
+    },
+
+    getEleMatrix(hd, vd) {
+        let y1Matrix = [
+            [0, 0, 0, 0],
+            [0, 1, 0, 0],
+            [Math.cos(hd), 0, Math.sin(hd), 0],
+            [0, 0, 0, 1]
+        ];
+        let zMatrix = [
+            [Math.cos(vd), -Math.sin(vd), 0, 0],
+            [Math.sin(vd), Math.cos(vd), 0, 0], 
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ];
+        let y2Matrix = [
+            [Math.sin(hd), 0, Math.cos(hd), 0],
+            [0, 1, 0, 0], 
+            [-Math.cos(hd), 0, Math.sin(hd), 0], 
+            [0, 0, 0, 1]
+        ];
+        
+        return this.multiMatrix(this.multiMatrix(y1Matrix, zMatrix), y2Matrix);
     },
 
     setFromSpherical: function( s ) {
@@ -252,8 +298,8 @@ export default {
     },
 
     setTransform(node, pos) {
-        let rotate = pos.rotateZ ? ` rotateY(${pos.rotateY}) rotateZ(${pos.rotateZ})` : '';
-        node.style.transform = `translate3d(${pos.x}, ${pos.y}, ${pos.z}) ${rotate}`;
+        let rotateY = pos.rotateY ? ` rotateY(${pos.rotateY})` : '';
+        node.style.transform = `translate3d(${pos.x}, ${pos.y}, ${pos.z}) ${rotateY}`;
     },
 
     setTransition(node, time, transType) {
