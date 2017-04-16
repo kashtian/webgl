@@ -157,10 +157,8 @@ export default {
             // table
             let col = table[i+3], row = table[i+4];
             this.initTablePos(col, row);
-            this.initSphere(col, row);
         }
-        //this.initSphere();
-        console.log('sphere: ', this.target.sphere);
+        this.initSphere();
         this.box.appendChild(this.target.doms);
     },
 
@@ -173,49 +171,85 @@ export default {
         });
     },
 
-    initSphere(col, row) {
-        let vDeg = 20 * (row - 1),
-            hDeg = 20 * (col - 1),
-            r = 800,
-            vRad = vDeg * Math.PI / 180,
-            hRad = hDeg * Math.PI / 180;
+    getSum(count) {
+        let sum = 0;
+        while(count > 0) {
+            sum += count;
+            count--;
+        }
+        return sum;
+    },
 
-        this.target.sphere.push({
-            x: r * Math.sin(vRad) * Math.cos(hRad) + 'px',
-            y: -r * Math.cos(vRad) + 'px',
-            z: r * Math.sin(vRad) * Math.sin(hRad) + 'px',
-            rotateY: this.getRotateY(hDeg) + 'deg'
-        })
+    getSphereArr() {
+        let raw = 9, max = 18, sphere = {}, vDeg = 0, step = 0,
+            len = 0, count = 0, start = 0, end = 0;
 
-        // for ( var i = 0, l = table.length; i < l; i ++ ) {
+        for (let i = 0; i < raw; i++) {
+            vDeg = (180 / (raw - 1)) * i;
+            if (vDeg == 0 || vDeg == 180) {
+                len = 1;
+            } else {                
+                len = Math.ceil(Math.abs(Math.sin(vDeg * Math.PI / 180)) / 1 * max);
+            }
+            sphere[i] = {
+                len: len
+            }
+            count += len;
+        }
 
-        //     var phi = Math.acos( -1 + ( 2 * i ) / l );
-        //     var theta = Math.sqrt( l * Math.PI ) * phi;
-            
+        step = Math.ceil((table.length / 5 - count) / raw);
+        for (let key in sphere) {
+            sphere[key].len += step;
+            end = start + sphere[key].len * 5;
+            sphere[key].arrs = table.slice(start, end);
+            start = end;
+        }
+        return sphere;
+    },
 
-        //     this.target.sphere.push(this.setFromSpherical({
-        //         phi: phi,
-        //         radius: 800,
-        //         theta: theta
-        //     }));
-        // }
+    initSphere() {
+        let sphere = this.getSphereArr(),
+            vDeg = 0, hDeg = 0, r = 800, vRad = 0, hRad = 0, raws = 9,
+            x = 0, y = 0, z = 0;
+
+        for (let raw in sphere) {
+            for (let j = 0, len = sphere[raw].arrs.length; j < len; j+=5) {
+                vDeg = (180 / (raws - 1)) * raw;
+                hDeg = (360 / (len / 5)) * (j / 5);
+                vRad = vDeg * Math.PI / 180;
+                hRad = hDeg * Math.PI / 180;
+
+                x = r * Math.sin(vRad) * Math.cos(hRad);
+                y = -r * Math.cos(vRad);
+                z = r * Math.sin(vRad) * Math.sin(hRad);
+
+                this.target.sphere.push({
+                    matrix: this.getMatrix3d(hDeg, vDeg, x, y, z)
+                });
+            }
+        }
         
     },
 
     getRotateZ(hDeg, deg) {
-        if ((hDeg >= 0 && hDeg <= 90) || (hDeg >= 270 && hDeg <= 360)) {
-            return deg - 90;
-        } else {
-            return 90 - deg;
-        }
-    },
-
-    getRotateY(deg) {
+        // if ((hDeg >= 0 && hDeg <= 180)) {
+        //     return (deg - 90);
+        // } else {
+        //     return (90 - deg);
+        // }
         return 90 - deg;
     },
 
-    getMatrix3d() {
+    getRotateY(deg) {
+        return deg - 90;
+    },
 
+    getMatrix3d(hdeg, vdeg, x, y, z) {
+        let hRad = this.getRotateY(hdeg) * Math.PI / 180;
+        let vRad = this.getRotateZ(hdeg, vdeg) * Math.PI / 180;
+
+        let martrix = this.getEleMatrix(hRad, vRad, x, y, z);
+        return this.getCss3Matrix(martrix).join(',');
     },
 
     multiMatrix(m1, m2) {
@@ -249,40 +283,29 @@ export default {
         return res;
     },
 
-    getEleMatrix(hd, vd) {
-        let y1Matrix = [
-            [0, 0, 0, 0],
+    getEleMatrix(hd, vd, x, y, z) {
+        let moveMatrix = [
+            [1, 0, 0, x],
+            [0, 1, 0, y],
+            [0, 0, 1, z],
+            [0, 0, 0, 1]
+        ]
+        let yMatrix = [
+            [Math.cos(hd), 0, -Math.sin(hd), 0],
             [0, 1, 0, 0],
-            [Math.cos(hd), 0, Math.sin(hd), 0],
-            [0, 0, 0, 1]
-        ];
-        let zMatrix = [
-            [Math.cos(vd), -Math.sin(vd), 0, 0],
-            [Math.sin(vd), Math.cos(vd), 0, 0], 
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ];
-        let y2Matrix = [
             [Math.sin(hd), 0, Math.cos(hd), 0],
-            [0, 1, 0, 0], 
-            [-Math.cos(hd), 0, Math.sin(hd), 0], 
             [0, 0, 0, 1]
-        ];
+        ]
+        let xMatrix = [
+            [1, 0, 0, 0],
+            [0, Math.cos(vd), -Math.sin(vd), 0],
+            [0, Math.sin(vd), Math.cos(vd), 0],
+            [0, 0, 0, 1]
+        ]
+
+        let m1 = this.multiMatrix(moveMatrix, yMatrix);
         
-        return this.multiMatrix(this.multiMatrix(y1Matrix, zMatrix), y2Matrix);
-    },
-
-    setFromSpherical: function( s ) {
-        let pos = {};
-
-        var sinPhiRadius = Math.sin( s.phi ) * s.radius;
-
-        pos.x = sinPhiRadius * Math.sin( s.theta ) + 'px';
-        pos.y = Math.cos( s.phi ) * s.radius + 'px';
-        pos.z = sinPhiRadius * Math.cos( s.theta ) + 'px';
-
-        return pos;
-
+        return this.multiMatrix(m1, xMatrix);
     },
 
     transform(type) {
@@ -298,8 +321,8 @@ export default {
     },
 
     setTransform(node, pos) {
-        let rotateY = pos.rotateY ? ` rotateY(${pos.rotateY})` : '';
-        node.style.transform = `translate3d(${pos.x}, ${pos.y}, ${pos.z}) ${rotateY}`;
+        let transform = pos.matrix ? `matrix3d(${pos.matrix})` : `translate3d(${pos.x}, ${pos.y}, ${pos.z})`;
+        node.style.transform = transform;
     },
 
     setTransition(node, time, transType) {
